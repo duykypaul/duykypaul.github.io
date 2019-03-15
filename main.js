@@ -30,7 +30,7 @@ webpackEmptyAsyncContext.id = "./src/$$_lazy_route_resource lazy recursive";
 /*! no static exports found */
 /***/ (function(module, exports) {
 
-module.exports = "<div class=\"wrapper d-flex flex-column align-items-center w-100\">\n  <h1 class=\"title\">todos</h1>\n  <div class=\"row justify-content-center w-100\">\n    <div class=\"todo-wrapper p-0 d-flex flex-column col-md-6 col-sm-8\">\n      <app-header></app-header>\n      <app-todo-list></app-todo-list>\n      <app-footer></app-footer> <!-- *ngIf=\"hasTodos$ | async\"-->\n    </div>\n  </div>\n  <small class=\"instruction text-center\">\n    <em>Press enter add new todo. Press Arrow icon to toggle todos.</em>\n    <br><br>\n    copyright todosMVC Project\n  </small>\n</div>\n\n"
+module.exports = "<div class=\"wrapper d-flex flex-column align-items-center w-100\">\n  <h1 class=\"title\">todos</h1>\n  <div class=\"row justify-content-center w-100\">\n    <div class=\"todo-wrapper p-0 d-flex flex-column col-md-6 col-sm-8\">\n      <app-header></app-header>\n      <app-todo-list></app-todo-list>\n      <app-footer ></app-footer> <!--*ngIf=\"hasTodos$ | async\" -->\n    </div>\n  </div>\n  <small class=\"instruction text-center\">\n    <em>Press enter add new todo. Press Arrow icon to toggle todos.</em>\n    <br><br>\n    copyright todosMVC Project\n  </small>\n</div>\n\n"
 
 /***/ }),
 
@@ -70,6 +70,8 @@ var AppComponent = /** @class */ (function () {
     AppComponent.prototype.ngOnInit = function () {
         this.todoService.fetchFromLocalStorage();
         this.hasTodo$ = this.todoService.length$.pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_3__["map"])(function (length) { return length > 0; }));
+        // pipe() return Observable<T>
+        // map() return dataType
     };
     AppComponent = tslib__WEBPACK_IMPORTED_MODULE_0__["__decorate"]([
         Object(_angular_core__WEBPACK_IMPORTED_MODULE_1__["Component"])({
@@ -154,7 +156,7 @@ var AppModule = /** @class */ (function () {
 /*! no static exports found */
 /***/ (function(module, exports) {
 
-module.exports = "<div class=\"footer w-100\" *ngIf=\"length\">\n  <div class=\"position-absolute d-flex justify-content-between align-items-center\"\n    style=\"top:0; bottom: 0; left: 0; right: 0\">\n    <span class=\"items-count\">\n      {{length}} item{{length > 1 ? 's' : ''}}\n    </span>\n    <div>\n      <button type=\"button\" class=\"filter-btn\" *ngFor=\"let btn of filterButtons\" [ngClass]=\"{active: btn.isActive}\"\n        (click)=\"filter(btn.type)\">\n        {{btn.label}}</button>\n    </div>\n    <button class=\"filter-btn clear-completed-btn\" [ngClass]=\"{'visible': hasComplete$ | async}\"\n      (click)=\"clearCompleted()\">clear completed</button>\n  </div>\n</div>"
+module.exports = "<div class=\"footer w-100\" *ngIf=\"length\">\n  <div class=\"position-absolute d-flex justify-content-between align-items-center\"\n    style=\"top:0; bottom: 0; left: 0; right: 0\">\n    <span class=\"items-count\" *ngIf=\"filterButtons[0].isActive\">\n      {{lengthFilterTodos}} item{{lengthFilterTodos > 1 ? 's' : ''}}\n    </span>\n    <span class=\"items-count\" *ngIf=\"filterButtons[1].isActive\">\n      {{lengthFilterTodos}} item{{lengthFilterTodos > 1 ? 's' : ''}}\n    </span>\n    <span class=\"items-count\" *ngIf=\"filterButtons[2].isActive\">\n      {{lengthFilterTodos}} item{{lengthFilterTodos > 1 ? 's' : ''}}\n    </span>\n    <div>\n      <button type=\"button\" class=\"filter-btn\" *ngFor=\"let btn of filterButtons\" [ngClass]=\"{active: btn.isActive}\"\n        (click)=\"filter(btn.type)\">\n        {{btn.label}}</button>\n    </div>\n    <button class=\"filter-btn clear-completed-btn\" [ngClass]=\"{'visible': hasComplete$ | async}\"\n      (click)=\"clearCompleted()\">clear completed</button>\n  </div>\n</div>"
 
 /***/ }),
 
@@ -200,6 +202,7 @@ var FooterComponent = /** @class */ (function () {
             { type: src_app_models_filtering_model__WEBPACK_IMPORTED_MODULE_2__["Filter"].Completed, label: 'Completed', isActive: false }
         ];
         this.length = 0;
+        this.lengthFilterTodos = 0;
         this.destroy$ = new rxjs__WEBPACK_IMPORTED_MODULE_4__["Subject"]();
     }
     FooterComponent.prototype.ngOnInit = function () {
@@ -208,6 +211,10 @@ var FooterComponent = /** @class */ (function () {
         this.todoService.length$.pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_5__["takeUntil"])(this.destroy$))
             .subscribe(function (length) {
             _this.length = length;
+        });
+        this.todoService.lengthFilterTodos$.pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_5__["takeUntil"])(this.destroy$))
+            .subscribe(function (lengthFilterTodos) {
+            _this.lengthFilterTodos = lengthFilterTodos;
         });
     };
     FooterComponent.prototype.filter = function (type) {
@@ -687,11 +694,15 @@ var TodoService = /** @class */ (function () {
     function TodoService(storageService) {
         this.storageService = storageService;
         this.lengthSubject = new rxjs__WEBPACK_IMPORTED_MODULE_3__["BehaviorSubject"](0);
-        this.todosSubject = new rxjs__WEBPACK_IMPORTED_MODULE_3__["BehaviorSubject"]([]);
+        // Track the length of array todos 
+        this.lengthFilterTodosSubject = new rxjs__WEBPACK_IMPORTED_MODULE_3__["BehaviorSubject"](0);
+        //Track the length of array filteredTodos
+        // private todosSubject: BehaviorSubject<Todo[]> = new BehaviorSubject<Todo[]>([]);
         this.currentFilter = _models_filtering_model__WEBPACK_IMPORTED_MODULE_4__["Filter"].All;
         this.displayTodosSubject = new rxjs__WEBPACK_IMPORTED_MODULE_3__["BehaviorSubject"]([]);
         this.todos$ = this.displayTodosSubject.asObservable();
         this.length$ = this.lengthSubject.asObservable();
+        this.lengthFilterTodos$ = this.lengthFilterTodosSubject.asObservable();
     }
     TodoService_1 = TodoService;
     TodoService.prototype.fetchFromLocalStorage = function () {
@@ -761,6 +772,7 @@ var TodoService = /** @class */ (function () {
     TodoService.prototype.updateTodosData = function () {
         this.displayTodosSubject.next(this.filteredTodos);
         this.lengthSubject.next(this.todos.length);
+        this.lengthFilterTodosSubject.next(this.filteredTodos.length);
     };
     var TodoService_1;
     TodoService.TodoStoragekey = 'todos';
